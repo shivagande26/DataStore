@@ -1,0 +1,127 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: "App_Version", description: "provide application version")
+  }
+
+  environment {
+    DOCKERHUB_CREDENTIALS=credentials("dockerhub")
+    SONARQUBE_CREDENTIALS=credentials("sonarqube")
+  }
+
+  stages {
+    stage("Checkout Stage") {
+      steps{
+        checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/shivagande26/DataStore.git']])
+      }
+    }
+    stage("Building Application") {
+      steps {
+        sh """
+          echo "-------- Building Application --------"
+          mvn clean package
+          echo "------- Application Built Successfully --------"
+        """
+      }
+    }
+    stage("Execute Testcases") {
+      steps {
+        sh """
+          echo "-------- Executing Testcases --------"
+          mvn test
+          echo "-------- Testcases Execution Complete --------"
+        """
+      }
+    }
+    stage("static code analisys") {
+      steps{
+        script {
+            def SonarQubecredentialsId = 'sonarqube'
+            staticCodeAnalysis(SonarQubecredentialsId)
+          }
+        }
+    }
+    stage("Quality Gate") {
+      steps {
+        timeout(time: 1, unit: 'HOURS') {
+        waitForQualityGate abortPipeline: true
+        }
+      }
+    }
+    stage("Pushing Artifacts To S3") {
+      steps {
+        sh """
+          echo "-------- Pushing Artifacts To S3 --------"
+          aws s3 cp ./target/*.jar s3://artifactory-jhwbchjebvhrvhgrbefhbr/
+          echo "-------- Pushing Artifacts To S3 Completed --------"
+        """
+      }
+    }
+    stage("Creating Docker Image") {
+      steps {
+        sh """
+          echo "-------- Building Docker Image --------"
+          docker build -t datastore:"${App_Version}" .
+          echo "-------- Image Successfully Built --------"
+        """
+      }
+    }
+    stage("Scaning Docker Image") {
+      steps {
+        sh """
+          echo "-------- Scanning Docker Image --------"
+          trivy image datastore:"${App_Version}"
+          echo "-------- Scanning Docker Image Complete --------"
+        """
+      }
+    }
+    stage("Tagging Docker Image") {
+      steps{
+        sh """
+          echo "-------- Tagging Docker Image --------"
+          docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
+          echo "-------- Tagging Docker Image Completed."
+        """
+      }
+    }
+    stage("Loggingin & Pushing Docker image To DockerHub") {
+      steps {
+        sh """
+          echo "-------- Logging To DockerHub --------"
+          docker login -u $DOCKERHUB_CREDENTIALS_USR --password $DOCKERHUB_CREDENTIALS_PSW
+          echo "-------- DockerHub Login Successful --------"
+
+          echo "-------- Pushing Docker Image To DockerHub --------"
+          docker push 8072388539/datastore:"${App_Version}"
+          echo "-------- Docker Image Pushed Successfully --------"
+        """
+      }
+    }
+    stage("cleanup") {
+      steps {
+        sh """
+           echo "-------- Cleaning Up Jenkins Machine --------"
+           docker image prune -a -f
+           echo "-------- Clean Up Successful --------"
+        """
+      }
+    }
+    stage("Deployment Acceptance") {
+      steps {
+        input 'Trigger Down Stream Job'
+      }
+    }
+    stage("Triggering Deployment Job") {
+      steps {
+        build job: "KubernetesDeployment", parameters: [string(name: "App_Name", value: "datastore-deploy"), string(name: "App_Version", value: "${params.App_Version}")]
+      }
+    }
+  }
+}
+
+def staticCodeAnalysis(credentialsId) {
+  withSonarQubeEnv(credentialsId: credentialsId) {
+    sh 'mvn sonar:sonar'
+  }
+}
