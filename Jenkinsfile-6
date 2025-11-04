@@ -1,0 +1,19 @@
+pipeline {
+  agent any
+
+  stages {
+    stage("Checkout Stage") {
+      steps{
+        checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/shivagande26/DataStore.git']])
+      }
+    }
+    stage("Building Application") {
+      steps {
+        sh """
+          echo "-------- Building Application --------"
+          mvn clean package
+          echo "------- Application Built Successfully --------"
+        """
+      }
+    }
+}
