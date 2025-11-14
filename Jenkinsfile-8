@@ -5,6 +5,10 @@ pipeline {
     string(name: "App_Version", description: "provide application version")
   }
 
+  environment {
+    DOCKERHUB_CREDENTIALS=credentials("dockerhub")
+  }
+
   stages {
     stage("Repo Clone") {
       steps {
@@ -53,6 +57,15 @@ pipeline {
           echo "-------- Scanning Docker Image --------"
           trivy image datastore:"${App_Version}"
           echo "-------- Scanning Docker Image Complete --------"
+        """
+      }
+    }
+    stage("Docker Image Tag") {
+      steps{
+        sh """
+          echo "-------- Tagging Docker Image --------"
+          docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
+          echo "-------- Tagging Docker Image Completed."
         """
       }
     }
