@@ -92,5 +92,10 @@ pipeline {
         """
       }
     }
+    stage("deployment acceptance") {
+      steps {
+        input 'Trigger Down Stream Job'
+      }
+    }
   }
 }
