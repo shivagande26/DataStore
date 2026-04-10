@@ -7,7 +7,7 @@ pipeline {
         checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/shivagande26/DataStore.git']])
       }
     }
-    stage("Maven Buuild") {
+    stage("Maven Build") {
       steps {
         sh """
           echo "-------- Building Application --------"
