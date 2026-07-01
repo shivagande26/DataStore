@@ -43,15 +43,15 @@ pipeline {
         """
       }
     }
-    // stage("docker image build") {
-    //   steps {
-    //     sh """
-    //       echo "-------- Building Docker Image --------"
-    //       docker build -t datastore:"${App_Version}" .
-    //       echo "-------- Image Successfully Built --------"
-    //     """
-    //   }
-    // }
+    stage("docker image build") {
+      steps {
+        sh """
+          echo "-------- Building Docker Image --------"
+          docker build -t datastore:"${App_Version}" .
+          echo "-------- Image Successfully Built --------"
+        """
+      }
+    }
     // stage("docker image scan") {
     //   steps {
     //     sh """
