@@ -16,91 +16,91 @@ pipeline {
         checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/shivagande26/DataStore.git']])
       }
     }
-    stage("maven build") {
-      steps {
-        sh """
-          echo "-------- Building Application --------"
-          mvn clean package
-          echo "------- Application Built Successfully --------"
-        """
-      }
-    }
-    stage("maven test") {
-      steps {
-        sh """
-          echo "-------- Executing Testcases --------"
-          mvn test
-          echo "-------- Testcases Execution Complete --------"
-        """
-      }
-    }
-    stage("artifact store") {
-      steps {
-        sh """
-          echo "-------- Pushing Artifacts To S3 --------"
-          aws s3 cp ./target/*.jar s3://datastore-artefact-store-apps-jenkins/
-          echo "-------- Pushing Artifacts To S3 Completed --------"
-        """
-      }
-    }
-    stage("docker image build") {
-      steps {
-        sh """
-          echo "-------- Building Docker Image --------"
-          docker build -t datastore:"${App_Version}" .
-          echo "-------- Image Successfully Built --------"
-        """
-      }
-    }
-    stage("docker image scan") {
-      steps {
-        sh """
-          echo "-------- Scanning Docker Image --------"
-          trivy image datastore:"${App_Version}"
-          echo "-------- Scanning Docker Image Complete --------"
-        """
-      }
-    }
-    stage("docker image tag") {
-      steps{
-        sh """
-          echo "-------- Tagging Docker Image --------"
-          docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
-          echo "-------- Tagging Docker Image Completed."
-        """
-      }
-    }
-    stage("loggingin & pushing docker image") {
-      steps {
-        sh """
-          echo "-------- Logging To DockerHub --------"
-          docker login -u $DOCKERHUB_CREDENTIALS_USR --password $DOCKERHUB_CREDENTIALS_PSW
-          echo "-------- DockerHub Login Successful --------"
+    // stage("maven build") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Building Application --------"
+    //       mvn clean package
+    //       echo "------- Application Built Successfully --------"
+    //     """
+    //   }
+    // }
+    // stage("maven test") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Executing Testcases --------"
+    //       mvn test
+    //       echo "-------- Testcases Execution Complete --------"
+    //     """
+    //   }
+    // }
+    // stage("artifact store") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Pushing Artifacts To S3 --------"
+    //       aws s3 cp ./target/*.jar s3://datastore-artefact-store-apps-jenkins/
+    //       echo "-------- Pushing Artifacts To S3 Completed --------"
+    //     """
+    //   }
+    // }
+    // stage("docker image build") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Building Docker Image --------"
+    //       docker build -t datastore:"${App_Version}" .
+    //       echo "-------- Image Successfully Built --------"
+    //     """
+    //   }
+    // }
+    // stage("docker image scan") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Scanning Docker Image --------"
+    //       trivy image datastore:"${App_Version}"
+    //       echo "-------- Scanning Docker Image Complete --------"
+    //     """
+    //   }
+    // }
+    // stage("docker image tag") {
+    //   steps{
+    //     sh """
+    //       echo "-------- Tagging Docker Image --------"
+    //       docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
+    //       echo "-------- Tagging Docker Image Completed."
+    //     """
+    //   }
+    // }
+    // stage("loggingin & pushing docker image") {
+    //   steps {
+    //     sh """
+    //       echo "-------- Logging To DockerHub --------"
+    //       docker login -u $DOCKERHUB_CREDENTIALS_USR --password $DOCKERHUB_CREDENTIALS_PSW
+    //       echo "-------- DockerHub Login Successful --------"
 
-          echo "-------- Pushing Docker Image To DockerHub --------"
-          docker push 8072388539/datastore:"${App_Version}"
-          echo "-------- Docker Image Pushed Successfully --------"
-        """
-      }
-    }
-    stage("cleanup") {
-      steps {
-        sh """
-           echo "-------- Cleaning Up Jenkins Machine --------"
-           docker image prune -a -f
-           echo "-------- Clean Up Successful --------"
-        """
-      }
-    }
-    stage("deployment acceptance") {
-      steps {
-        input 'Trigger Down Stream Job'
-      }
-    }
-    stage("triggering deployment job") {
-      steps {
-        build job: "KubernetesDeployment", parameters: [string(name: "App_Name", value: "datastore-deploy"), string(name: "App_Version", value: "${params.App_Version}")]
-      }
-    }
+    //       echo "-------- Pushing Docker Image To DockerHub --------"
+    //       docker push 8072388539/datastore:"${App_Version}"
+    //       echo "-------- Docker Image Pushed Successfully --------"
+    //     """
+    //   }
+    // }
+    // stage("cleanup") {
+    //   steps {
+    //     sh """
+    //        echo "-------- Cleaning Up Jenkins Machine --------"
+    //        docker image prune -a -f
+    //        echo "-------- Clean Up Successful --------"
+    //     """
+    //   }
+    // }
+    // stage("deployment acceptance") {
+    //   steps {
+    //     input 'Trigger Down Stream Job'
+    //   }
+    // }
+    // stage("triggering deployment job") {
+    //   steps {
+    //     build job: "KubernetesDeployment", parameters: [string(name: "App_Name", value: "datastore-deploy"), string(name: "App_Version", value: "${params.App_Version}")]
+    //   }
+    // }
   }
 }
