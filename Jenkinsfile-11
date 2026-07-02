@@ -61,15 +61,15 @@ pipeline {
         """
       }
     }
-    // stage("docker image tag") {
-    //   steps{
-    //     sh """
-    //       echo "-------- Tagging Docker Image --------"
-    //       docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
-    //       echo "-------- Tagging Docker Image Completed."
-    //     """
-    //   }
-    // }
+    stage("docker image tag") {
+      steps{
+        sh """
+          echo "-------- Tagging Docker Image --------"
+          docker tag datastore:"${App_Version}" 8072388539/datastore:"${App_Version}"
+          echo "-------- Tagging Docker Image Completed."
+        """
+      }
+    }
     // stage("loggingin & pushing docker image") {
     //   steps {
     //     sh """
