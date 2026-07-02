@@ -6,9 +6,9 @@ pipeline {
      string(name: "App_Version", description: "provide application version")
   }
 
-  // environment {
-  //   DOCKERHUB_CREDENTIALS=credentials("dockerhub")
-  // }
+  environment {
+    DOCKERHUB_CREDENTIALS=credentials("dockerhub")
+  }
 
   stages {
     stage("checkout") {
@@ -70,28 +70,28 @@ pipeline {
         """
       }
     }
-    // stage("loggingin & pushing docker image") {
-    //   steps {
-    //     sh """
-    //       echo "-------- Logging To DockerHub --------"
-    //       docker login -u $DOCKERHUB_CREDENTIALS_USR --password $DOCKERHUB_CREDENTIALS_PSW
-    //       echo "-------- DockerHub Login Successful --------"
+    stage("loggingin & pushing docker image") {
+      steps {
+        sh """
+          echo "-------- Logging To DockerHub --------"
+          docker login -u $DOCKERHUB_CREDENTIALS_USR --password $DOCKERHUB_CREDENTIALS_PSW
+          echo "-------- DockerHub Login Successful --------"
 
-    //       echo "-------- Pushing Docker Image To DockerHub --------"
-    //       docker push 8072388539/datastore:"${App_Version}"
-    //       echo "-------- Docker Image Pushed Successfully --------"
-    //     """
-    //   }
-    // }
-    // stage("cleanup") {
-    //   steps {
-    //     sh """
-    //        echo "-------- Cleaning Up Jenkins Machine --------"
-    //        docker image prune -a -f
-    //        echo "-------- Clean Up Successful --------"
-    //     """
-    //   }
-    // }
+          echo "-------- Pushing Docker Image To DockerHub --------"
+          docker push 8072388539/datastore:"${App_Version}"
+          echo "-------- Docker Image Pushed Successfully --------"
+        """
+      }
+    }
+    stage("cleanup") {
+      steps {
+        sh """
+           echo "-------- Cleaning Up Jenkins Machine --------"
+           docker image prune -a -f
+           echo "-------- Clean Up Successful --------"
+        """
+      }
+    }
     // stage("deployment acceptance") {
     //   steps {
     //     input 'Trigger Down Stream Job'
